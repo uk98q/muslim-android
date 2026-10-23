@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -249,7 +250,7 @@ private fun MushafPageView(
                             color = Color.White,
                             fontFamily = AmiriQuran,
                             fontSize = (fontSp * 0.9f).sp,
-                            maxLines = 1,
+                            overflow = TextOverflow.Visible,
                             softWrap = false,
                             textAlign = TextAlign.Center
                         )
@@ -308,7 +309,7 @@ private fun MushafTextLine(line: MLine, fontSp: Float, selected: Pair<Int, Int>?
                         color = if (isSelected) Mint else Color.White,
                         fontFamily = AmiriQuran,
                         fontSize = fontSp.sp,
-                        maxLines = 1,
+                        overflow = TextOverflow.Visible,
                         softWrap = false,
                         modifier = Modifier.clickable { onTap(u.surah, u.ayah) }
                     )

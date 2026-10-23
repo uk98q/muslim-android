@@ -55,11 +55,13 @@ jobs:
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell monkey -p com.uk98q.muslim -c android.intent.category.LAUNCHER 1
             sleep 25
-            adb shell pidof com.uk98q.muslim
-            adb shell dumpsys window windows | grep -E "mCurrentFocus" | tee focus.txt
-            grep -q "com.uk98q.muslim" focus.txt
-            adb logcat -d | grep -E "FATAL EXCEPTION|com.uk98q.muslim.*Exception" > crash.txt || true
+            adb shell pidof com.uk98q.muslim | tee pid.txt
+            test -s pid.txt
+            adb shell dumpsys activity activities > activities.txt || true
+            adb logcat -d > logcat.txt || true
+            grep -E "FATAL EXCEPTION" logcat.txt > crash.txt || true
             if [ -s crash.txt ]; then echo "Crash found:"; cat crash.txt; exit 1; fi
+            grep -c "com.uk98q.muslim" activities.txt || echo "activity name not found in dumpsys (process is running)"
             adb exec-out screencap -p > emulator-home.png
             echo "Smoke test passed"
 

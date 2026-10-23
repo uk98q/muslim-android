@@ -69,6 +69,7 @@ class AyahPlayer {
 
     fun load(url: String, label: String, autoplay: Boolean) {
         release()
+        Log.i(QURAN_TAG, "loading $label $url")
         val mp = MediaPlayer()
         media = mp
         try {

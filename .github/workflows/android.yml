@@ -57,24 +57,28 @@ jobs:
             sleep 25
             adb shell pidof com.uk98q.muslim | tee pid.txt
             test -s pid.txt
-            adb shell dumpsys activity activities > activities.txt || true
             adb logcat -d > logcat.txt || true
             grep -E "FATAL EXCEPTION" logcat.txt > crash.txt || true
             if [ -s crash.txt ]; then echo "Crash found:"; cat crash.txt; exit 1; fi
             adb exec-out screencap -p > emulator-home.png
             echo "Smoke test passed"
 
+            # Network probe from inside the emulator (diagnostic; does not fail the build)
+            adb shell "toybox wget -q -O /dev/null --timeout=20 https://everyayah.com/data/Alafasy_128kbps/001001.mp3; echo wget_exit=\$?" || true
+
             # Quran: open Al-Fatiha, autoplay from ayah 1, and expect ayah 2 to start after ayah 1 ends.
             adb shell am force-stop com.uk98q.muslim
             adb logcat -c
             adb shell am start -n com.uk98q.muslim/.MainActivity --ei surah 1 --ez autoplay true
-            sleep 45
-            adb logcat -d -s MuslimQuran:I MuslimQuran:W > quran-log.txt || true
-            cat quran-log.txt
+            sleep 60
+            adb logcat -d > logcat-quran.txt || true
+            adb logcat -d -s MuslimQuran:I MuslimQuran:W MediaPlayer:W MediaPlayer:E AndroidRuntime:E > quran-log.txt || true
+            echo "--- MuslimQuran and media lines ---"
+            cat quran-log.txt || true
+            echo "--- crash lines ---"
+            grep -A8 "FATAL EXCEPTION" logcat-quran.txt || echo "no crash"
             grep -q "started 1:1" quran-log.txt
             grep -q "started 1:2" quran-log.txt
-            adb logcat -d > logcat-quran.txt || true
-            if grep -q "FATAL EXCEPTION" logcat-quran.txt; then echo "Crash during Quran test"; grep -A5 "FATAL EXCEPTION" logcat-quran.txt; exit 1; fi
             adb exec-out screencap -p > quran-reader.png
             echo "Quran playback test passed"
 

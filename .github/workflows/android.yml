@@ -51,6 +51,8 @@ jobs:
             set -e
             adb wait-for-device
             adb install -r app/build/outputs/apk/release/app-release.apk
+            adb shell pm grant com.uk98q.muslim android.permission.ACCESS_FINE_LOCATION || true
+            adb shell pm grant com.uk98q.muslim android.permission.ACCESS_COARSE_LOCATION || true
             adb logcat -c
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell monkey -p com.uk98q.muslim -c android.intent.category.LAUNCHER 1
@@ -105,5 +107,3 @@ jobs:
             --title "مسلم Android 1.4 (run ${GITHUB_RUN_NUMBER})" \
             --notes "نسخة أندرويد من تطبيق مسلم 1.4 مع القرآن الكريم (رواية حفص) والتفسير والتلاوة. ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر. تم اختبار التشغيل على محاكي Android 14 قبل النشر."
           echo "$TAG" > release-tag.txt
-            adb shell pm grant com.uk98q.muslim android.permission.ACCESS_FINE_LOCATION || true
-            adb shell pm grant com.uk98q.muslim android.permission.ACCESS_COARSE_LOCATION || true

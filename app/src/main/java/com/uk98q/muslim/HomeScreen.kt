@@ -115,6 +115,7 @@ fun HomeScreen(state: AppState, onNavigate: (String) -> Unit, onSearch: () -> Un
         HomeSection("أذكار النوم", progressLabel(state.progress(Category.SLEEP)), Icons.Filled.Lock, Dusk, "category/sleep"),
         HomeSection("عند الاستيقاظ", progressLabel(state.progress(Category.WAKE_UP)), Icons.Filled.Notifications, Dawn, "category/wakeUp"),
         HomeSection("أسماء الله الحسنى", "${AllahNames.all.size} اسمًا", Icons.Filled.Info, Mint, "names"),
+        HomeSection("القرآن الكريم", "النص والتفسير والتلاوة", Icons.Filled.Star, Mint, "quran"),
         HomeSection("المسبحة", "سبحان الله والحمد لله", Icons.Filled.Refresh, Mint, "tasbih"),
         HomeSection("العداد", "عداد حر لأي ذكر", Icons.Filled.Add, Dusk, "counter"),
         HomeSection("الإعدادات", "الخط والاهتزاز والموقع", Icons.Filled.Settings, Dawn, "settings")
@@ -288,4 +289,3 @@ fun countdown(ms: Long): String {
     val s = total % 60
     return String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
 }
-        HomeSection("القرآن الكريم", "النص والتفسير والتلاوة", Icons.Filled.Star, Mint, "quran"),

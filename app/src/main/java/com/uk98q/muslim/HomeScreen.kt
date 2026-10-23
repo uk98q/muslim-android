@@ -281,8 +281,11 @@ private fun hijriDate(ms: Long): String {
 private fun gregorianDate(z: ZonedDateTime): String =
     DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale("ar")).format(z)
 
-private fun clock(ms: Long, zone: ZoneId): String =
-    DateTimeFormatter.ofPattern("HH:mm").format(Instant.ofEpochMilli(ms).atZone(zone))
+private fun clock(ms: Long, zone: ZoneId): String {
+    val time = Instant.ofEpochMilli(ms).atZone(zone)
+    val marker = if (time.hour < 12) "ص" else "م"
+    DateTimeFormatter.ofPattern("h:mm", Locale.US).format(time) + " " + marker
+}
 
 fun countdown(ms: Long): String {
     val total = (ms / 1000).coerceAtLeast(0L)

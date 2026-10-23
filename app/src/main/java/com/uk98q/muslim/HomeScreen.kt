@@ -105,7 +105,7 @@ fun HomeScreen(state: AppState, onNavigate: (String) -> Unit, onSearch: () -> Un
     val remaining = if (next != null) next.epochMillis - nowMs else 0L
 
     val dayOfYear = LocalDate.now().dayOfYear
-    val featuredDua = AthkarData.duas[dayOfYear % AthkarData.duas.size].text
+    val featuredDua = DailyContent.dua(java.time.LocalDate.now(java.time.ZoneId.systemDefault())).text
     val featuredName = AllahNames.all[dayOfYear % AllahNames.all.size]
 
     val sections = listOf(
@@ -195,7 +195,9 @@ fun HomeScreen(state: AppState, onNavigate: (String) -> Unit, onSearch: () -> Un
                 )
             }
 
-            // Wide cards: horizontal scroll.
+           // Wide cards: horizontal scroll.
+            DailyCard(modifier = Modifier.fillMaxWidth())
+
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)

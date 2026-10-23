@@ -31,7 +31,7 @@ jobs:
           ls -la "$APK"
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
           "$APKSIGNER" verify --print-certs "$APK" | head -3
-          cp "$APK" Muslim-v1.6-android.apk
+          cp "$APK" Muslim-v1.7-android.apk
 
       - name: Enable KVM for the emulator
         run: |
@@ -63,6 +63,9 @@ jobs:
             grep -E "FATAL EXCEPTION" logcat.txt > crash.txt || true
             if [ -s crash.txt ]; then echo "Crash found:"; cat crash.txt; exit 1; fi
             adb exec-out screencap -p > emulator-home.png
+            adb shell input swipe 540 1900 540 1000 400
+            sleep 3
+            adb exec-out screencap -p > home-daily-section.png
             echo "Smoke test passed"
 
             # Test 1: page 2 (Al-Baqarah), Yasser Al-Dosari (index 5), autoplay, tafsir panel OPEN.
@@ -100,8 +103,9 @@ jobs:
         with:
           name: muslim-android
           path: |
-            Muslim-v1.6-android.apk
+            Muslim-v1.7-android.apk
             emulator-home.png
+            home-daily-section.png
             mushaf-page-2-tafsir-open.png
             mushaf-page-2-tafsir-closed.png
             quran-log.txt
@@ -110,9 +114,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="android-v1.6-run${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" Muslim-v1.6-android.apk emulator-home.png mushaf-page-2-tafsir-open.png mushaf-page-2-tafsir-closed.png quran-log.txt \
+          TAG="android-v1.7-run${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Muslim-v1.7-android.apk emulator-home.png home-daily-section.png mushaf-page-2-tafsir-open.png mushaf-page-2-tafsir-closed.png quran-log.txt \
             --repo "$GITHUB_REPOSITORY" \
-            --title "مسلم Android 1.6 (run ${GITHUB_RUN_NUMBER})" \
-            --notes "نسخة أندرويد من مسلم 1.6: تفسير لا يغطي الآيات مع زر إخفاء وإظهار، وتوزيع متساوٍ للفراغات بين الكلمات، وخط أميري قرآن (SIL OFL). ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر."
+            --title "مسلم Android 1.7 (run ${GITHUB_RUN_NUMBER})" \
+            --notes "نسخة أندرويد من مسلم 1.7: تفسير لا يغطي الآيات مع زر إخفاء وإظهار، وتوزيع متساوٍ للفراغات بين الكلمات، وخط أميري قرآن (SIL OFL). ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر."
           echo "$TAG" > release-tag.txt

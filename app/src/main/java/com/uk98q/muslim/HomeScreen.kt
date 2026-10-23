@@ -284,7 +284,7 @@ private fun gregorianDate(z: ZonedDateTime): String =
 private fun clock(ms: Long, zone: ZoneId): String {
     val time = Instant.ofEpochMilli(ms).atZone(zone)
     val marker = if (time.hour < 12) "ص" else "م"
-    DateTimeFormatter.ofPattern("h:mm", Locale.US).format(time) + " " + marker
+    return DateTimeFormatter.ofPattern("h:mm", Locale.US).format(time) + " " + marker
 }
 
 fun countdown(ms: Long): String {

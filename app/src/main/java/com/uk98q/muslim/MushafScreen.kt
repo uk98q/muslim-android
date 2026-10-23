@@ -1,5 +1,6 @@
 package com.uk98q.muslim
 
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -139,64 +140,70 @@ fun MushafScreen(
 
     fun surahName(n: Int): String = surahs.getOrNull(n - 1)?.name ?: ""
 
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            beyondViewportPageCount = 1
-        ) { index ->
-            val page = pages[index]
-            MushafPageView(
-                page = page,
-                juzName = MushafRepo.JUZ_NAMES[page.juz - 1],
-                nameOf = ::surahName,
-                basmala = basmala,
-                selected = selected,
-                onTap = { s, a -> selected = s to a }
-            )
-        }
-
-        Box(Modifier.align(Alignment.TopStart).padding(start = 10.dp, top = 8.dp)) {
+    Column(Modifier.fillMaxSize().background(Color.Black)) {
+        Row(
+            Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             CircleGlassButton(Icons.Filled.ArrowForward, Mint, "رجوع", onBack)
         }
 
-        val sel = selected
-        if (sel != null) {
-            Column(
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(12.dp)
-                    .fillMaxWidth()
-                    .glass(radius = 24.dp)
-                    .padding(14.dp)
-            ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1
+            ) { index ->
+                val page = pages[index]
+                MushafPageView(
+                    page = page,
+                    juzName = MushafRepo.JUZ_NAMES[page.juz - 1],
+                    nameOf = ::surahName,
+                    basmala = basmala,
+                    selected = selected,
+                    onTap = { s, a -> selected = s to a }
+                )
+            }
+
+            val tafsirSel = selected
+            if (tafsirSel != null && state.tafsirOn) {
+                Column(
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .fillMaxWidth()
+                        .glass(radius = 20.dp)
+                        .padding(14.dp)
                 ) {
-                    Txt(state.reciter.arName, 13f, color = Mint)
-                    Txt("سورة ${surahName(sel.first)} · الآية ${arabicDigits(sel.second)}", 13f, color = SecondaryText)
-                }
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircleGlassButton(Icons.Filled.KeyboardArrowRight, Mint, "الآية السابقة") { stepAyah(-1) }
-                    Spacer(Modifier.width(18.dp))
-                    PlayPauseButton(playing = player.isPlaying) { togglePlay() }
-                    Spacer(Modifier.width(18.dp))
-                    CircleGlassButton(Icons.Filled.KeyboardArrowLeft, Mint, "الآية التالية") { stepAyah(1) }
-                }
-                if (state.tafsirOn) {
-                    Spacer(Modifier.height(10.dp))
-                    Column(Modifier.fillMaxWidth().heightIn(max = 170.dp).verticalScroll(rememberScrollState())) {
+                    Column(Modifier.fillMaxWidth().heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
                         Txt(tafsir ?: "جارٍ تحميل التفسير…", 14f, color = Color.White.copy(alpha = 0.88f))
                     }
                     Spacer(Modifier.height(6.dp))
                     Txt(Tafsir.ATTRIBUTION, 11f, color = SecondaryText)
+                }
+            }
+        }
+
+        // Reserved bar area: the page size stays the same whether or not audio is selected.
+        Box(Modifier.fillMaxWidth().height(84.dp).padding(horizontal = 12.dp, vertical = 8.dp)) {
+            val sel = selected
+            if (sel != null) {
+                Row(
+                    Modifier.fillMaxSize().glass(radius = 22.dp).padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Txt(state.reciter.arName, 12f, color = Mint)
+                        Txt("سورة ${surahName(sel.first)} · الآية ${arabicDigits(sel.second)}", 12f, color = SecondaryText)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircleGlassButton(Icons.Filled.KeyboardArrowRight, Mint, "الآية السابقة") { stepAyah(-1) }
+                        Spacer(Modifier.width(10.dp))
+                        PlayPauseButton(playing = player.isPlaying) { togglePlay() }
+                        Spacer(Modifier.width(10.dp))
+                        CircleGlassButton(Icons.Filled.KeyboardArrowLeft, Mint, "الآية التالية") { stepAyah(1) }
+                    }
                 }
             }
         }
@@ -214,7 +221,7 @@ private fun MushafPageView(
 ) {
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 52.dp)) {
+    BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 4.dp)) {
         // One font size per page: the widest line fills the width, so every line is justified.
         val fontSp = remember(page.number, maxWidth, maxHeight) {
             var widest = 1f

@@ -64,7 +64,8 @@ fun MushafScreen(
     startPage: Int,
     autoplay: Boolean,
     onAutoplayUsed: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    initialPanelOpen: Boolean = true
 ) {
     val context = LocalContext.current
     val pages = remember { MushafRepo.pages(context) }
@@ -81,6 +82,7 @@ fun MushafScreen(
     var selected by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var loaded by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var tafsir by remember { mutableStateOf<String?>(null) }
+    var panelOpen by remember { mutableStateOf(initialPanelOpen) }
 
     fun playAyah(s: Int, a: Int, startNow: Boolean) {
         selected = s to a
@@ -165,23 +167,10 @@ fun MushafScreen(
                 )
             }
 
-            val tafsirSel = selected
-            if (tafsirSel != null && state.tafsirOn) {
-                Column(
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .fillMaxWidth()
-                        .glass(radius = 20.dp)
-                        .padding(14.dp)
-                ) {
-                    Column(Modifier.fillMaxWidth().heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
-                        Txt(tafsir ?: "جارٍ تحميل التفسير…", 14f, color = Color.White.copy(alpha = 0.88f))
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Txt(Tafsir.ATTRIBUTION, 11f, color = SecondaryText)
-                }
-            }
+        }
+
+        if (selected != null && state.tafsirOn) {
+            TafsirPanel(text = tafsir, open = panelOpen, onToggle = { panelOpen = !panelOpen })
         }
 
         // Reserved bar area: the page size stays the same whether or not audio is selected.
@@ -280,29 +269,85 @@ private fun MushafPageView(
     }
 }
 
+/** One word, plus the ayah medallion when the word ends its verse. */
+private data class MUnit(val word: String, val surah: Int, val ayah: Int, val end: Boolean)
+
+private fun buildUnits(line: MLine): List<MUnit> = line.items.flatMap { item ->
+    val words = item.text.split(' ').filter { it.isNotEmpty() }
+    words.mapIndexed { i, w -> MUnit(w, item.surah, item.ayah, item.end && i == words.lastIndex) }
+}
+
+/**
+ * One justified mushaf line. Gaps are placed only between words, all equal on the line,
+ * so the medallions do not stretch the spacing.
+ */
 @Composable
 private fun MushafTextLine(line: MLine, fontSp: Float, selected: Pair<Int, Int>?, onTap: (Int, Int) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        line.items.forEach { item ->
-            val isSelected = selected != null && selected.first == item.surah && selected.second == item.ayah
-            val color = if (isSelected) Mint else Color.White
-            item.text.split(' ').forEach { word ->
-                Text(
-                    text = word,
-                    color = color,
-                    fontFamily = AmiriQuran,
-                    fontSize = fontSp.sp,
-                    lineHeight = (fontSp * 1.6f).sp,
-                    maxLines = 1,
-                    softWrap = false,
-                    modifier = Modifier.clickable { onTap(item.surah, item.ayah) }
-                )
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val units = remember(line) { buildUnits(line) }
+    val style = TextStyle(fontFamily = AmiriQuran, fontSize = fontSp.sp)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val gapDp = remember(units, fontSp, maxWidth) {
+            val natural = units.sumOf { u ->
+                val px = measurer.measure(u.word, style).size.width.toDouble()
+                (px / density.density + if (u.end) fontSp * 1.25f + 4f else 0f).toDouble()
             }
-            if (item.end) AyahMedallion(arabicDigits(item.ayah), fontSp)
+            if (units.size > 1) ((maxWidth.value - natural) / (units.size - 1) - 0.5).coerceAtLeast(0.0).toFloat() else 0f
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(gapDp.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            units.forEach { u ->
+                val isSelected = selected != null && selected.first == u.surah && selected.second == u.ayah
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = u.word,
+                        color = if (isSelected) Mint else Color.White,
+                        fontFamily = AmiriQuran,
+                        fontSize = fontSp.sp,
+                        lineHeight = (fontSp * 1.6f).sp,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.clickable { onTap(u.surah, u.ayah) }
+                    )
+                    if (u.end) {
+                        Spacer(Modifier.width(4.dp))
+                        AyahMedallion(arabicDigits(u.ayah), fontSp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Tafsir panel: sits in the page column, so it pushes the lines up instead of covering them. */
+@Composable
+private fun TafsirPanel(text: String?, open: Boolean, onToggle: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .glass(radius = 20.dp)
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().clickable(onClick = onToggle),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Txt("التفسير · ابن كثير", 13f, color = Mint, weight = FontWeight.Medium)
+            Txt(if (open) "إخفاء" else "إظهار", 13f, color = SecondaryText)
+        }
+        if (open) {
+            Spacer(Modifier.height(8.dp))
+            Column(Modifier.fillMaxWidth().heightIn(max = 170.dp).verticalScroll(rememberScrollState())) {
+                Txt(text ?: "جارٍ تحميل التفسير…", 15f, color = Color.White.copy(alpha = 0.9f))
+            }
+            Spacer(Modifier.height(6.dp))
+            Txt(Tafsir.ATTRIBUTION, 11f, color = SecondaryText)
         }
     }
 }

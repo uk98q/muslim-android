@@ -24,11 +24,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val startPage = intent.getIntExtra("page", 0)
         val startAutoplay = intent.getBooleanExtra("autoplay", false)
+        val startPanelOpen = intent.getBooleanExtra("tafsirOpen", true)
         setContent {
             val state = remember {
                 AppState(applicationContext).also { s ->
                     val r = intent.getIntExtra("reciter", -1)
                     if (r >= 0) s.applyReciter(r)
+                    if (intent.hasExtra("tafsir")) s.applyTafsir(intent.getBooleanExtra("tafsir", false))
                 }
             }
             MuslimTheme {
@@ -36,7 +38,7 @@ class MainActivity : ComponentActivity() {
                     LocalLayoutDirection provides LayoutDirection.Rtl,
                     LocalTextScale provides textScaleFor(state.textSize)
                 ) {
-                    MuslimApp(state, startPage, startAutoplay)
+                    MuslimApp(state, startPage, startAutoplay, startPanelOpen)
                 }
             }
         }
@@ -44,7 +46,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MuslimApp(state: AppState, startPage: Int = 0, startAutoplay: Boolean = false) {
+fun MuslimApp(state: AppState, startPage: Int = 0, startAutoplay: Boolean = false, startPanelOpen: Boolean = true) {
     val nav = rememberNavController()
     val back: () -> Unit = { nav.popBackStack() }
     val context = LocalContext.current
@@ -81,7 +83,8 @@ fun MuslimApp(state: AppState, startPage: Int = 0, startAutoplay: Boolean = fals
                 startPage = page,
                 autoplay = startAutoplay && page == startPage && !autoplayUsed.value,
                 onAutoplayUsed = { autoplayUsed.value = true },
-                onBack = back
+                onBack = back,
+                initialPanelOpen = startPanelOpen
             )
         }
         composable(

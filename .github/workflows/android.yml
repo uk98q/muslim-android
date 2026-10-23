@@ -31,7 +31,7 @@ jobs:
           ls -la "$APK"
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
           "$APKSIGNER" verify --print-certs "$APK" | head -3
-          cp "$APK" Muslim-v1.5-android.apk
+          cp "$APK" Muslim-v1.6-android.apk
 
       - name: Enable KVM for the emulator
         run: |
@@ -39,7 +39,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Emulator smoke test and mushaf page test
+      - name: Emulator smoke test and mushaf page 2 tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -65,25 +65,34 @@ jobs:
             adb exec-out screencap -p > emulator-home.png
             echo "Smoke test passed"
 
-            # Mushaf: open page 295 with reciter index 5 (Yasser Al-Dosari) and autoplay.
+            # Test 1: page 2 (Al-Baqarah), Yasser Al-Dosari (index 5), autoplay, tafsir panel OPEN.
             adb shell am force-stop com.uk98q.muslim
             adb logcat -c
-            adb shell am start -n com.uk98q.muslim/.MainActivity --ei page 295 --ei reciter 5 --ez autoplay true
-            sleep 45
-            adb logcat -d > logcat-quran.txt || true
-            adb exec-out screencap -p > mushaf-page-295.png || true
-            adb shell pidof com.uk98q.muslim || echo "app not running"
-            adb logcat -d > logcat-full.txt || true
-            grep -E "MuslimQuran|MediaPlayer|NavController|AndroidRuntime|com.uk98q" logcat-full.txt > quran-log.txt || true
-            echo "--- MuslimQuran and media lines ---"
-            cat quran-log.txt || true
-            echo "--- crash lines ---"
-            grep -A8 "FATAL EXCEPTION" logcat-quran.txt || echo "no crash"
-            grep -q "Yasser_Ad-Dussary_128kbps" quran-log.txt
-            grep -q "started 18:" quran-log.txt
+            adb shell am start -n com.uk98q.muslim/.MainActivity --ei page 2 --ei reciter 5 --ez autoplay true --ez tafsir true --ez tafsirOpen true
+            sleep 50
+            adb exec-out screencap -p > mushaf-page-2-tafsir-open.png || true
+            adb logcat -d > logcat-open.txt || true
+            grep -E "MuslimQuran|MediaPlayer|AndroidRuntime|com.uk98q" logcat-open.txt > quran-log-open.txt || true
+            cat quran-log-open.txt || true
+            grep -A8 "FATAL EXCEPTION" logcat-open.txt && exit 1 || echo "no crash (open)"
+            grep -q "Yasser_Ad-Dussary_128kbps" quran-log-open.txt
+            grep -q "started 2:1" quran-log-open.txt
             adb shell pidof com.uk98q.muslim
-            adb exec-out screencap -p > mushaf-page-295.png
-            echo "Mushaf Yasser playback test passed"
+            echo "Page 2 tafsir-open test passed"
+
+            # Test 2: same page, tafsir panel CLOSED (collapsed header only).
+            adb shell am force-stop com.uk98q.muslim
+            adb logcat -c
+            adb shell am start -n com.uk98q.muslim/.MainActivity --ei page 2 --ei reciter 5 --ez autoplay true --ez tafsir true --ez tafsirOpen false
+            sleep 50
+            adb exec-out screencap -p > mushaf-page-2-tafsir-closed.png || true
+            adb logcat -d > logcat-closed.txt || true
+            grep -A8 "FATAL EXCEPTION" logcat-closed.txt && exit 1 || echo "no crash (closed)"
+            adb shell pidof com.uk98q.muslim
+            echo "Page 2 tafsir-closed test passed"
+
+            adb logcat -d > logcat-full.txt || true
+            grep -E "MuslimQuran|MediaPlayer|AndroidRuntime|com.uk98q" logcat-full.txt > quran-log.txt || true
 
       - name: Upload screenshots and APK
         uses: actions/upload-artifact@v4
@@ -91,18 +100,19 @@ jobs:
         with:
           name: muslim-android
           path: |
-            Muslim-v1.5-android.apk
+            Muslim-v1.6-android.apk
             emulator-home.png
-            mushaf-page-295.png
+            mushaf-page-2-tafsir-open.png
+            mushaf-page-2-tafsir-closed.png
             quran-log.txt
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="android-v1.5-run${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" Muslim-v1.5-android.apk emulator-home.png mushaf-page-295.png quran-log.txt \
+          TAG="android-v1.6-run${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Muslim-v1.6-android.apk emulator-home.png mushaf-page-2-tafsir-open.png mushaf-page-2-tafsir-closed.png quran-log.txt \
             --repo "$GITHUB_REPOSITORY" \
-            --title "مسلم Android 1.5 (run ${GITHUB_RUN_NUMBER})" \
-            --notes "نسخة أندرويد من مسلم 1.5: المصحف الكامل برواية حفص بتخطيط 604 صفحة (15 سطرًا)، مع التفسير والتلاوة لعدد من القراء، ومنهم ياسر الدوسري. ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر."
+            --title "مسلم Android 1.6 (run ${GITHUB_RUN_NUMBER})" \
+            --notes "نسخة أندرويد من مسلم 1.6: تفسير لا يغطي الآيات مع زر إخفاء وإظهار، وتوزيع متساوٍ للفراغات بين الكلمات، وخط أميري قرآن (SIL OFL). ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر."
           echo "$TAG" > release-tag.txt

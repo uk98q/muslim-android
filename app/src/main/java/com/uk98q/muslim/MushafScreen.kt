@@ -225,7 +225,7 @@ private fun MushafPageView(
                 }
             }
             val widestDp = widest / density.density
-            val byWidth = 20f * maxWidth.value / widestDp
+            val byWidth = 0.9f * 20f * maxWidth.value / widestDp
             val byHeight = (maxHeight.value - 36f) / 15f / 1.6f
             minOf(byWidth, byHeight).coerceIn(12f, 36f)
         }

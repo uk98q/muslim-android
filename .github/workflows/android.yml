@@ -31,7 +31,7 @@ jobs:
           ls -la "$APK"
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
           "$APKSIGNER" verify --print-certs "$APK" | head -3
-          cp "$APK" Muslim-v1.4-android.apk
+          cp "$APK" Muslim-v1.5-android.apk
 
       - name: Enable KVM for the emulator
         run: |
@@ -39,7 +39,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Emulator smoke test and Quran playback test
+      - name: Emulator smoke test and mushaf page test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -65,28 +65,25 @@ jobs:
             adb exec-out screencap -p > emulator-home.png
             echo "Smoke test passed"
 
-            # Network probe from inside the emulator (diagnostic; does not fail the build)
-            adb shell "toybox wget -q -O /dev/null --timeout=20 https://everyayah.com/data/Alafasy_128kbps/001001.mp3; echo wget_exit=\$?" || true
-
-            # Quran: open Al-Fatiha, autoplay from ayah 1, and expect ayah 2 to start after ayah 1 ends.
+            # Mushaf: open page 295 with reciter index 5 (Yasser Al-Dosari) and autoplay.
             adb shell am force-stop com.uk98q.muslim
             adb logcat -c
-            adb shell am start -n com.uk98q.muslim/.MainActivity --ei surah 1 --ez autoplay true
-            sleep 90
+            adb shell am start -n com.uk98q.muslim/.MainActivity --ei page 295 --ei reciter 5 --ez autoplay true
+            sleep 45
             adb logcat -d > logcat-quran.txt || true
-            adb exec-out screencap -p > quran-reader.png || true
+            adb exec-out screencap -p > mushaf-page-295.png || true
             adb shell pidof com.uk98q.muslim || echo "app not running"
-            adb shell dumpsys activity top | grep -E "ACTIVITY|mFocused" | head -5 || true
             adb logcat -d > logcat-full.txt || true
             grep -E "MuslimQuran|MediaPlayer|NavController|AndroidRuntime|com.uk98q" logcat-full.txt > quran-log.txt || true
             echo "--- MuslimQuran and media lines ---"
             cat quran-log.txt || true
             echo "--- crash lines ---"
             grep -A8 "FATAL EXCEPTION" logcat-quran.txt || echo "no crash"
-            grep -q "started 1:1" quran-log.txt
-            grep -q "started 1:2" quran-log.txt
-            adb exec-out screencap -p > quran-reader.png
-            echo "Quran playback test passed"
+            grep -q "Yasser_Ad-Dussary_128kbps" quran-log.txt
+            grep -q "started 18:" quran-log.txt
+            adb shell pidof com.uk98q.muslim
+            adb exec-out screencap -p > mushaf-page-295.png
+            echo "Mushaf Yasser playback test passed"
 
       - name: Upload screenshots and APK
         uses: actions/upload-artifact@v4
@@ -94,18 +91,18 @@ jobs:
         with:
           name: muslim-android
           path: |
-            Muslim-v1.4-android.apk
+            Muslim-v1.5-android.apk
             emulator-home.png
-            quran-reader.png
+            mushaf-page-295.png
             quran-log.txt
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="android-v1.4-run${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" Muslim-v1.4-android.apk emulator-home.png quran-reader.png quran-log.txt \
+          TAG="android-v1.5-run${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Muslim-v1.5-android.apk emulator-home.png mushaf-page-295.png quran-log.txt \
             --repo "$GITHUB_REPOSITORY" \
-            --title "مسلم Android 1.4 (run ${GITHUB_RUN_NUMBER})" \
-            --notes "نسخة أندرويد من تطبيق مسلم 1.4 مع القرآن الكريم (رواية حفص) والتفسير والتلاوة. ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر. تم اختبار التشغيل على محاكي Android 14 قبل النشر."
+            --title "مسلم Android 1.5 (run ${GITHUB_RUN_NUMBER})" \
+            --notes "نسخة أندرويد من مسلم 1.5: المصحف الكامل برواية حفص بتخطيط 604 صفحة (15 سطرًا)، مع التفسير والتلاوة لعدد من القراء، ومنهم ياسر الدوسري. ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر."
           echo "$TAG" > release-tag.txt

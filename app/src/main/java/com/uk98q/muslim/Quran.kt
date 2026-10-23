@@ -50,7 +50,8 @@ enum class Reciter(val arName: String, val folder: String) {
     BASIT("عبد الباسط عبد الصمد (مرتل)", "Abdul_Basit_Murattal_192kbps"),
     SUDAIS("عبد الرحمن السديس", "Abdurrahmaan_As-Sudais_192kbps"),
     GHAMIDI("سعد الغامدي", "Ghamadi_40kbps"),
-    MAHER("ماهر المعيقلي", "MaherAlMuaiqly128kbps");
+    MAHER("ماهر المعيقلي", "MaherAlMuaiqly128kbps"),
+    YASSER("ياسر الدوسري", "Yasser_Ad-Dussary_128kbps");
 
     fun url(surah: Int, ayah: Int): String =
         "https://everyayah.com/data/$folder/%03d%03d.mp3".format(surah, ayah)

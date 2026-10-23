@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.navigation.NavType
@@ -21,16 +22,21 @@ import androidx.navigation.navArgument
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val startSurah = intent.getIntExtra("surah", 0)
+        val startPage = intent.getIntExtra("page", 0)
         val startAutoplay = intent.getBooleanExtra("autoplay", false)
         setContent {
-            val state = remember { AppState(applicationContext) }
+            val state = remember {
+                AppState(applicationContext).also { s ->
+                    val r = intent.getIntExtra("reciter", -1)
+                    if (r >= 0) s.applyReciter(r)
+                }
+            }
             MuslimTheme {
                 CompositionLocalProvider(
                     LocalLayoutDirection provides LayoutDirection.Rtl,
                     LocalTextScale provides textScaleFor(state.textSize)
                 ) {
-                    MuslimApp(state, startSurah, startAutoplay)
+                    MuslimApp(state, startPage, startAutoplay)
                 }
             }
         }
@@ -38,9 +44,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MuslimApp(state: AppState, startSurah: Int = 0, startAutoplay: Boolean = false) {
+fun MuslimApp(state: AppState, startPage: Int = 0, startAutoplay: Boolean = false) {
     val nav = rememberNavController()
     val back: () -> Unit = { nav.popBackStack() }
+    val context = LocalContext.current
+    val autoplayUsed = rememberSaveable { mutableStateOf(false) }
     // True once the requested surah has been opened, so returning home does not reopen it.
     val opened = rememberSaveable { mutableStateOf(false) }
 
@@ -48,10 +56,10 @@ fun MuslimApp(state: AppState, startSurah: Int = 0, startAutoplay: Boolean = fal
         composable("home") {
             // The graph is ready here, so this navigation is never dropped.
             LaunchedEffect(Unit) {
-                if (!opened.value && startSurah in 1..114) {
+                if (!opened.value && startPage in 1..604) {
                     opened.value = true
-                    Log.i("MuslimQuran", "opening surah $startSurah autoplay=$startAutoplay")
-                    nav.navigate("quran/$startSurah")
+                    Log.i("MuslimQuran", "opening page $startPage autoplay=$startAutoplay")
+                    nav.navigate("mushaf/$startPage")
                 }
             }
             HomeScreen(
@@ -61,17 +69,18 @@ fun MuslimApp(state: AppState, startSurah: Int = 0, startAutoplay: Boolean = fal
             )
         }
         composable("quran") {
-            QuranIndexScreen(onBack = back, onOpen = { n -> nav.navigate("quran/$n") })
+            QuranIndexScreen(onBack = back, onOpen = { n -> nav.navigate("mushaf/${MushafRepo.startPage(context, n)}") })
         }
         composable(
-            "quran/{n}",
-            arguments = listOf(navArgument("n") { type = NavType.IntType })
+            "mushaf/{page}",
+            arguments = listOf(navArgument("page") { type = NavType.IntType })
         ) { entry ->
-            val n = entry.arguments?.getInt("n") ?: 1
-            QuranSurahScreen(
+            val page = entry.arguments?.getInt("page") ?: 1
+            MushafScreen(
                 state = state,
-                surahNumber = n,
-                autoplay = startAutoplay && n == startSurah,
+                startPage = page,
+                autoplay = startAutoplay && page == startPage && !autoplayUsed.value,
+                onAutoplayUsed = { autoplayUsed.value = true },
                 onBack = back
             )
         }

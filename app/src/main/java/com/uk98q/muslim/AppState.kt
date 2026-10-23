@@ -42,12 +42,12 @@ class AppState(context: Context) {
         loadProgress()
     }
 
-    fun setTextSize(value: Int) {
+    fun applyTextSize(value: Int) {
         textSize = value
         prefs.edit().putInt("textSize", value).apply()
     }
 
-    fun setHaptics(value: Boolean) {
+    fun applyHaptics(value: Boolean) {
         haptics = value
         prefs.edit().putBoolean("haptics", value).apply()
     }
@@ -58,22 +58,22 @@ class AppState(context: Context) {
         prefs.edit().putInt("tasbih.count", count).putInt("tasbih.total", total).apply()
     }
 
-    fun setTasbihTarget(value: Int) {
+    fun applyTasbihTarget(value: Int) {
         tasbihTarget = value
         prefs.edit().putInt("tasbih.target", value).apply()
     }
 
-    fun setTasbihPhrase(value: Int) {
+    fun applyTasbihPhrase(value: Int) {
         tasbihPhrase = value
         prefs.edit().putInt("tasbih.phrase", value).apply()
     }
 
-    fun setCounterValue(value: Int) {
+    fun applyCounterValue(value: Int) {
         counterValue = value
         prefs.edit().putInt("counter.value", value).apply()
     }
 
-    fun setCounterLabel(value: String) {
+    fun applyCounterLabel(value: String) {
         counterLabel = value
         prefs.edit().putString("counter.label", value).apply()
     }

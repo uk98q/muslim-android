@@ -111,7 +111,7 @@ fun TasbihScreen(state: AppState, onBack: () -> Unit) {
                         val selected = index == state.tasbihPhrase
                         GlassChip(text, selected, Mint) {
                             if (!selected) {
-                                state.setTasbihPhrase(index)
+                                state.applyTasbihPhrase(index)
                                 state.setTasbih(0, state.tasbihTotal)
                             }
                         }
@@ -128,7 +128,7 @@ fun TasbihScreen(state: AppState, onBack: () -> Unit) {
                             Dawn,
                             Modifier.weight(1f)
                         ) {
-                            state.setTasbihTarget(t)
+                            state.applyTasbihTarget(t)
                             state.setTasbih(0, state.tasbihTotal)
                         }
                     }
@@ -198,7 +198,7 @@ fun CounterScreen(state: AppState, onBack: () -> Unit) {
             ) {
                 BasicTextField(
                     value = state.counterLabel,
-                    onValueChange = { value -> state.setCounterLabel(value) },
+                    onValueChange = { value -> state.applyCounterLabel(value) },
                     singleLine = true,
                     textStyle = TextStyle(
                         color = Color.White,
@@ -221,7 +221,7 @@ fun CounterScreen(state: AppState, onBack: () -> Unit) {
                             .size(70.dp)
                             .glass(35.dp)
                             .clickable {
-                                if (state.counterValue > 0) state.setCounterValue(state.counterValue - 1)
+                                if (state.counterValue > 0) state.applyCounterValue(state.counterValue - 1)
                                 tick()
                             },
                         contentAlignment = Alignment.Center
@@ -234,14 +234,14 @@ fun CounterScreen(state: AppState, onBack: () -> Unit) {
                             .clip(CircleShape)
                             .background(Dusk)
                             .clickable {
-                                state.setCounterValue(state.counterValue + 1)
+                                state.applyCounterValue(state.counterValue + 1)
                                 tick()
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Filled.Add, "زيادة", tint = Color.Black, modifier = Modifier.size(34.dp))
                     }
-                    CircleGlassButton(Icons.Filled.Refresh, Dawn, "تصفير") { state.setCounterValue(0) }
+                    CircleGlassButton(Icons.Filled.Refresh, Dawn, "تصفير") { state.applyCounterValue(0) }
                 }
                 Txt("اضغط الزائد للعد، والناقص للتراجع", 14f, color = SecondaryText)
             }
@@ -273,7 +273,7 @@ fun SettingsScreen(state: AppState, onBack: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         listOf("صغير", "متوسط", "كبير", "أكبر").forEachIndexed { index, label ->
                             GlassChip(label, state.textSize == index, Mint, Modifier.weight(1f)) {
-                                state.setTextSize(index)
+                                state.applyTextSize(index)
                             }
                         }
                     }
@@ -284,7 +284,7 @@ fun SettingsScreen(state: AppState, onBack: () -> Unit) {
                         Txt("الاهتزاز عند العد", 16f, modifier = Modifier.weight(1f))
                         Switch(
                             checked = state.haptics,
-                            onCheckedChange = { state.setHaptics(it) },
+                            onCheckedChange = { state.applyHaptics(it) },
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = Mint,
                                 checkedThumbColor = Color.Black

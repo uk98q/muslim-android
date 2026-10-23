@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +34,6 @@ import androidx.compose.foundation.layout.Box as LayoutBox
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
@@ -46,7 +46,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -195,7 +198,7 @@ fun CounterScreen(state: AppState, onBack: () -> Unit) {
             ) {
                 BasicTextField(
                     value = state.counterLabel,
-                    onValueChange = { state.setCounterLabel(it) },
+                    onValueChange = { value -> state.setCounterLabel(value) },
                     singleLine = true,
                     textStyle = TextStyle(
                         color = Color.White,
@@ -213,9 +216,17 @@ fun CounterScreen(state: AppState, onBack: () -> Unit) {
                 )
                 Txt("${state.counterValue}", 80f, weight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.CenterVertically) {
-                    CircleGlassButton(Icons.Filled.Remove, SecondaryText, "إنقاص") {
-                        if (state.counterValue > 0) state.setCounterValue(state.counterValue - 1)
-                        tick()
+                    Box(
+                        modifier = Modifier
+                            .size(70.dp)
+                            .glass(35.dp)
+                            .clickable {
+                                if (state.counterValue > 0) state.setCounterValue(state.counterValue - 1)
+                                tick()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MinusGlyph(SecondaryText, Modifier.size(22.dp))
                     }
                     Box(
                         modifier = Modifier
@@ -359,6 +370,20 @@ fun SettingsScreen(state: AppState, onBack: () -> Unit) {
 }
 
 private data class SearchResult(val id: String, val text: String, val source: String)
+
+@Composable
+fun MinusGlyph(tint: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val y = size.height / 2f
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.2f, y),
+            end = Offset(size.width * 0.8f, y),
+            strokeWidth = 3.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+}
 
 private fun buildResults(query: String): List<SearchResult> {
     if (query.isEmpty()) return emptyList()

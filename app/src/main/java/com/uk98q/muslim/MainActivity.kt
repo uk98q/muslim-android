@@ -1,12 +1,15 @@
 package com.uk98q.muslim
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.navigation.NavType
@@ -38,14 +41,19 @@ class MainActivity : ComponentActivity() {
 fun MuslimApp(state: AppState, startSurah: Int = 0, startAutoplay: Boolean = false) {
     val nav = rememberNavController()
     val back: () -> Unit = { nav.popBackStack() }
-
-    // Start at home, then open the requested surah once. A concrete route is not a valid start destination.
-    LaunchedEffect(startSurah) {
-        if (startSurah in 1..114) nav.navigate("quran/$startSurah")
-    }
+    // True once the requested surah has been opened, so returning home does not reopen it.
+    val opened = rememberSaveable { mutableStateOf(false) }
 
     NavHost(navController = nav, startDestination = "home") {
         composable("home") {
+            // The graph is ready here, so this navigation is never dropped.
+            LaunchedEffect(Unit) {
+                if (!opened.value && startSurah in 1..114) {
+                    opened.value = true
+                    Log.i("MuslimQuran", "opening surah $startSurah autoplay=$startAutoplay")
+                    nav.navigate("quran/$startSurah")
+                }
+            }
             HomeScreen(
                 state = state,
                 onNavigate = { route -> nav.navigate(route) },

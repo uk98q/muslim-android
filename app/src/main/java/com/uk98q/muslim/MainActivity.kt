@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -38,8 +39,12 @@ fun MuslimApp(state: AppState, startSurah: Int = 0, startAutoplay: Boolean = fal
     val nav = rememberNavController()
     val back: () -> Unit = { nav.popBackStack() }
 
-    val start = if (startSurah in 1..114) "quran/$startSurah" else "home"
-    NavHost(navController = nav, startDestination = start) {
+    // Start at home, then open the requested surah once. A concrete route is not a valid start destination.
+    LaunchedEffect(startSurah) {
+        if (startSurah in 1..114) nav.navigate("quran/$startSurah")
+    }
+
+    NavHost(navController = nav, startDestination = "home") {
         composable("home") {
             HomeScreen(
                 state = state,

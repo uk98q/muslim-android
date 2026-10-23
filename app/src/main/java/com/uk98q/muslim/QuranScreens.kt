@@ -455,3 +455,4 @@ private fun PauseGlyph(tint: Color) {
         Box(modifier = Modifier.size(width = 5.dp, height = 16.dp).background(tint, RoundedCornerShape(2.dp)))
     }
 }
+    Log.i(QURAN_TAG, "reader n=$surahNumber autoplay=$autoplay found=${surah != null}")

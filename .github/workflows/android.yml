@@ -72,6 +72,9 @@ jobs:
             adb shell am start -n com.uk98q.muslim/.MainActivity --ei surah 1 --ez autoplay true
             sleep 60
             adb logcat -d > logcat-quran.txt || true
+            adb exec-out screencap -p > quran-reader.png || true
+            adb shell pidof com.uk98q.muslim || echo "app not running"
+            adb shell dumpsys activity top | grep -E "ACTIVITY|mFocused" | head -5 || true
             adb logcat -d -s MuslimQuran:I MuslimQuran:W MediaPlayer:W MediaPlayer:E AndroidRuntime:E > quran-log.txt || true
             echo "--- MuslimQuran and media lines ---"
             cat quran-log.txt || true

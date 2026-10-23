@@ -17,6 +17,8 @@ import androidx.navigation.navArgument
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val startSurah = intent.getIntExtra("surah", 0)
+        val startAutoplay = intent.getBooleanExtra("autoplay", false)
         setContent {
             val state = remember { AppState(applicationContext) }
             MuslimTheme {
@@ -24,7 +26,7 @@ class MainActivity : ComponentActivity() {
                     LocalLayoutDirection provides LayoutDirection.Rtl,
                     LocalTextScale provides textScaleFor(state.textSize)
                 ) {
-                    MuslimApp(state)
+                    MuslimApp(state, startSurah, startAutoplay)
                 }
             }
         }
@@ -32,16 +34,32 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MuslimApp(state: AppState) {
+fun MuslimApp(state: AppState, startSurah: Int = 0, startAutoplay: Boolean = false) {
     val nav = rememberNavController()
     val back: () -> Unit = { nav.popBackStack() }
 
-    NavHost(navController = nav, startDestination = "home") {
+    val start = if (startSurah in 1..114) "quran/$startSurah" else "home"
+    NavHost(navController = nav, startDestination = start) {
         composable("home") {
             HomeScreen(
                 state = state,
                 onNavigate = { route -> nav.navigate(route) },
                 onSearch = { nav.navigate("search") }
+            )
+        }
+        composable("quran") {
+            QuranIndexScreen(onBack = back, onOpen = { n -> nav.navigate("quran/$n") })
+        }
+        composable(
+            "quran/{n}",
+            arguments = listOf(navArgument("n") { type = NavType.IntType })
+        ) { entry ->
+            val n = entry.arguments?.getInt("n") ?: 1
+            QuranSurahScreen(
+                state = state,
+                surahNumber = n,
+                autoplay = startAutoplay && n == startSurah,
+                onBack = back
             )
         }
         composable(

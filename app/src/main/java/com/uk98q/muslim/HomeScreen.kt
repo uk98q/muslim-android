@@ -288,3 +288,4 @@ fun countdown(ms: Long): String {
     val s = total % 60
     return String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
 }
+        HomeSection("القرآن الكريم", "النص والتفسير والتلاوة", Icons.Filled.Star, Mint, "quran"),

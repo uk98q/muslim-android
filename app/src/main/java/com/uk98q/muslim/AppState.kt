@@ -35,6 +35,10 @@ class AppState(context: Context) {
         private set
     var longitude by mutableStateOf<Double?>(null)
         private set
+    var reciterIndex by mutableIntStateOf(prefs.getInt("quran.reciter", 0))
+        private set
+    var tafsirOn by mutableStateOf(prefs.getBoolean("quran.tafsir", false))
+        private set
 
     val counts = mutableStateMapOf<String, Int>()
 
@@ -50,6 +54,18 @@ class AppState(context: Context) {
     fun applyHaptics(value: Boolean) {
         haptics = value
         prefs.edit().putBoolean("haptics", value).apply()
+    }
+
+    val reciter: Reciter get() = Reciter.fromIndex(reciterIndex)
+
+    fun applyReciter(value: Int) {
+        reciterIndex = value
+        prefs.edit().putInt("quran.reciter", value).apply()
+    }
+
+    fun applyTafsir(value: Boolean) {
+        tafsirOn = value
+        prefs.edit().putBoolean("quran.tafsir", value).apply()
     }
 
     fun setTasbih(count: Int, total: Int) {

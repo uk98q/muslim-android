@@ -12,8 +12,8 @@ android {
         applicationId = "com.uk98q.muslim"
         minSdk = 26
         targetSdk = 34
-        versionCode = 13
-        versionName = "1.3"
+        versionCode = 14
+        versionName = "1.4"
     }
 
     signingConfigs {

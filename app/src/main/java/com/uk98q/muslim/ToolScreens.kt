@@ -293,6 +293,32 @@ fun SettingsScreen(state: AppState, onBack: () -> Unit) {
                     }
                 }
 
+                SettingsSection("القرآن الكريم") {
+                    Txt("القارئ", 14f, color = SecondaryText)
+                    Spacer(Modifier.height(8.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        Reciter.values().forEachIndexed { index, reciter ->
+                            GlassChip(reciter.arName, state.reciterIndex == index, Mint, Modifier.fillMaxWidth()) {
+                                state.applyReciter(index)
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Txt("إظهار زر التفسير لكل آية", 16f, modifier = Modifier.weight(1f))
+                        Switch(
+                            checked = state.tafsirOn,
+                            onCheckedChange = { state.applyTafsir(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = Mint,
+                                checkedThumbColor = Color.Black
+                            )
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Txt("التفسير: تفسير ابن كثير عبر quran.com. الصوت يُبث من everyayah.com عند الاستماع فقط.", 13f, color = SecondaryText)
+                }
+
                 SettingsSection("الموقع وأوقات الصلاة") {
                     Txt(
                         if (state.latitude != null) {
@@ -338,8 +364,13 @@ fun SettingsScreen(state: AppState, onBack: () -> Unit) {
 
                 SettingsSection("عن التطبيق") {
                     Txt("مسلم: الإصدار 1.3", 16f, weight = FontWeight.Medium)
+                    Txt("مسلم: الإصدار 1.4", 16f, weight = FontWeight.Medium)
                     Spacer(Modifier.height(8.dp))
                     Txt("كل المزايا مجانية، ولا توجد اشتراكات أو مشتريات داخل التطبيق.", 14f, color = SecondaryText)
+                    Spacer(Modifier.height(8.dp))
+                    Txt("نص القرآن: مشروع تنزيل Tanzil.net، رواية حفص عن عاصم، برخصة CC BY 3.0.", 13f, color = SecondaryText)
+                    Spacer(Modifier.height(8.dp))
+                    Txt(Tafsir.ATTRIBUTION, 13f, color = SecondaryText)
                     Spacer(Modifier.height(8.dp))
                     Txt("الخط: Readex Pro بترخيص SIL Open Font License 1.1.", 13f, color = SecondaryText)
                 }

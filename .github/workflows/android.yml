@@ -31,7 +31,7 @@ jobs:
           ls -la "$APK"
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
           "$APKSIGNER" verify --print-certs "$APK" | head -3
-          cp "$APK" Muslim-v1.3-android.apk
+          cp "$APK" Muslim-v1.4-android.apk
 
       - name: Enable KVM for the emulator
         run: |
@@ -39,7 +39,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Emulator smoke test
+      - name: Emulator smoke test and Quran playback test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -61,25 +61,40 @@ jobs:
             adb logcat -d > logcat.txt || true
             grep -E "FATAL EXCEPTION" logcat.txt > crash.txt || true
             if [ -s crash.txt ]; then echo "Crash found:"; cat crash.txt; exit 1; fi
-            grep -c "com.uk98q.muslim" activities.txt || echo "activity name not found in dumpsys (process is running)"
             adb exec-out screencap -p > emulator-home.png
             echo "Smoke test passed"
 
-      - name: Upload screenshot and APK
+            # Quran: open Al-Fatiha, autoplay from ayah 1, and expect ayah 2 to start after ayah 1 ends.
+            adb shell am force-stop com.uk98q.muslim
+            adb logcat -c
+            adb shell am start -n com.uk98q.muslim/.MainActivity --ei surah 1 --ez autoplay true
+            sleep 45
+            adb logcat -d -s MuslimQuran:I MuslimQuran:W > quran-log.txt || true
+            cat quran-log.txt
+            grep -q "started 1:1" quran-log.txt
+            grep -q "started 1:2" quran-log.txt
+            adb logcat -d > logcat-quran.txt || true
+            if grep -q "FATAL EXCEPTION" logcat-quran.txt; then echo "Crash during Quran test"; grep -A5 "FATAL EXCEPTION" logcat-quran.txt; exit 1; fi
+            adb exec-out screencap -p > quran-reader.png
+            echo "Quran playback test passed"
+
+      - name: Upload screenshots and APK
         uses: actions/upload-artifact@v4
         with:
           name: muslim-android
           path: |
-            Muslim-v1.3-android.apk
+            Muslim-v1.4-android.apk
             emulator-home.png
+            quran-reader.png
+            quran-log.txt
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="android-v1.3-run${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" Muslim-v1.3-android.apk emulator-home.png \
+          TAG="android-v1.4-run${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Muslim-v1.4-android.apk emulator-home.png quran-reader.png quran-log.txt \
             --repo "$GITHUB_REPOSITORY" \
-            --title "مسلم Android 1.3 (run ${GITHUB_RUN_NUMBER})" \
-            --notes "نسخة أندرويد من تطبيق مسلم. ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر. تم اختبار التشغيل على محاكي Android 14 قبل النشر."
+            --title "مسلم Android 1.4 (run ${GITHUB_RUN_NUMBER})" \
+            --notes "نسخة أندرويد من تطبيق مسلم 1.4 مع القرآن الكريم (رواية حفص) والتفسير والتلاوة. ملف APK موقّع بمفتاح ذاتي للتثبيت المباشر. تم اختبار التشغيل على محاكي Android 14 قبل النشر."
           echo "$TAG" > release-tag.txt

@@ -308,7 +308,6 @@ private fun MushafTextLine(line: MLine, fontSp: Float, selected: Pair<Int, Int>?
                         color = if (isSelected) Mint else Color.White,
                         fontFamily = AmiriQuran,
                         fontSize = fontSp.sp,
-                        lineHeight = (fontSp * 1.6f).sp,
                         maxLines = 1,
                         softWrap = false,
                         modifier = Modifier.clickable { onTap(u.surah, u.ayah) }
